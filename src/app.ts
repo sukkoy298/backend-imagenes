@@ -13,12 +13,13 @@ interface UploadResponse {
 const app: Express = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
+const API_PREFIX = process.env.API_PREFIX || "";
 
 app.use(cors());
 app.use(express.json());
-app.use("/assets", express.static(path.join(__dirname, "../uploads")));
+app.use(API_PREFIX + "/assets", express.static(path.join(__dirname, "../uploads")));
 
-app.post("/upload", (req: Request, res: Response, next: NextFunction) => {
+app.post(API_PREFIX + "/upload", (req: Request, res: Response, next: NextFunction) => {
   upload.single("file")(req, res, (err) => {
     if (err) return next(err);
 
@@ -27,7 +28,7 @@ app.post("/upload", (req: Request, res: Response, next: NextFunction) => {
       return;
     }
 
-    const url = `${BASE_URL}/assets/${req.file.filename}`;
+    const url = `${BASE_URL}${API_PREFIX}/assets/${req.file.filename}`;
     const response: UploadResponse = { url, status: "success" };
     res.json(response);
   });

@@ -18,6 +18,8 @@ const getSecret = () => {
   return new TextEncoder().encode(secret);
 };
 
+const ALLOWED_ROLES = ["admin", "gerente"];
+
 export async function requireAdmin(
   req: Request,
   res: Response,
@@ -32,11 +34,11 @@ export async function requireAdmin(
 
   try {
     const token = authHeader.split(" ")[1];
-    const verify = await getJwtDecrypt();
-    const { payload } = await verify(token, getSecret());
+    const decrypt = await getJwtDecrypt();
+    const { payload } = await decrypt(token, getSecret());
 
-    if (payload.role !== "admin") {
-      res.status(403).json({ url: null, status: "error", message: "Acceso denegado: se requiere rol admin" });
+    if (!ALLOWED_ROLES.includes(payload.role as string)) {
+      res.status(403).json({ url: null, status: "error", message: "Acceso denegado: se requiere rol admin o gerente" });
       return;
     }
 

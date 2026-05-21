@@ -1,0 +1,48 @@
+import { Request, Response, NextFunction } from "express";
+
+let _jwtVerify: ((token: string, secret: Uint8Array) => Promise<{ payload: Record<string, unknown> }>) | null = null;
+
+async function getJwtVerify() {
+  if (!_jwtVerify) {
+    const jose = await import("jose");
+    _jwtVerify = jose.jwtVerify;
+  }
+  return _jwtVerify!;
+}
+
+const getSecret = () => {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) {
+    throw new Error("AUTH_SECRET no está configurado en las variables de entorno");
+  }
+  return new TextEncoder().encode(secret);
+};
+
+export async function requireAdmin(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader?.startsWith("Bearer ")) {
+    res.status(401).json({ url: null, status: "error", message: "Token no proporcionado" });
+    return;
+  }
+
+  try {
+    const token = authHeader.split(" ")[1];
+    const verify = await getJwtVerify();
+    const { payload } = await verify(token, getSecret());
+
+    if (payload.role !== "admin") {
+      res.status(403).json({ url: null, status: "error", message: "Acceso denegado: se requiere rol admin" });
+      return;
+    }
+
+    (req as any).user = payload;
+    next();
+  } catch {
+    res.status(401).json({ url: null, status: "error", message: "Token inválido o expirado" });
+  }
+}

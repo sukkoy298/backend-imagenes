@@ -3,6 +3,7 @@ import express, { Express, Request, Response, NextFunction } from "express";
 import cors from "cors";
 import path from "path";
 import { upload } from "./config/storage";
+import { requireAdmin } from "./middleware/auth";
 import { MulterError } from "multer";
 
 interface UploadResponse {
@@ -19,7 +20,7 @@ app.use(cors());
 app.use(express.json());
 app.use(API_PREFIX + "/assets", express.static(path.join(__dirname, "../uploads")));
 
-app.post(API_PREFIX + "/upload", (req: Request, res: Response, next: NextFunction) => {
+app.post(API_PREFIX + "/upload", requireAdmin, (req: Request, res: Response, next: NextFunction) => {
   upload.single("file")(req, res, (err) => {
     if (err) return next(err);
 

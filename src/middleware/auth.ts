@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 
-let _jwtVerify: ((token: string, secret: Uint8Array) => Promise<{ payload: Record<string, unknown> }>) | null = null;
+let _jwtDecrypt: ((token: string, secret: Uint8Array) => Promise<{ payload: Record<string, unknown> }>) | null = null;
 
-async function getJwtVerify() {
-  if (!_jwtVerify) {
+async function getJwtDecrypt() {
+  if (!_jwtDecrypt) {
     const jose = await import("jose");
-    _jwtVerify = jose.jwtVerify;
+    _jwtDecrypt = jose.jwtDecrypt;
   }
-  return _jwtVerify!;
+  return _jwtDecrypt!;
 }
 
 const getSecret = () => {
@@ -32,7 +32,7 @@ export async function requireAdmin(
 
   try {
     const token = authHeader.split(" ")[1];
-    const verify = await getJwtVerify();
+    const verify = await getJwtDecrypt();
     const { payload } = await verify(token, getSecret());
 
     if (payload.role !== "admin") {

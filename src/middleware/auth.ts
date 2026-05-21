@@ -17,11 +17,13 @@ export async function requireAdmin(
   try {
     const token = authHeader.split(" ")[1];
     const { decode } = await import("@auth/core/jwt");
-    const payload = await decode({
-      token,
-      secret: process.env.AUTH_SECRET!,
-      salt: "Auth.js",
-    });
+    const possibleSalts = ["__Secure-authjs.session-token", "authjs.session-token"];
+
+    let payload: Record<string, unknown> | null = null;
+    for (const salt of possibleSalts) {
+      try { payload = await decode({ token, secret: process.env.AUTH_SECRET!, salt }); } catch { continue; }
+      if (payload) break;
+    }
 
     if (!payload) {
       res.status(401).json({ url: null, status: "error", message: "Token inválido o expirado" });

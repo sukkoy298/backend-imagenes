@@ -4,6 +4,8 @@ import cors from "cors";
 import path from "path";
 import { upload } from "./config/storage";
 import { requireAdmin } from "./middleware/auth";
+import { requireAuth } from "./middleware/requireAuth";
+import emailRouter from "./routes/email";
 import { MulterError } from "multer";
 
 interface UploadResponse {
@@ -19,6 +21,7 @@ const API_PREFIX = process.env.API_PREFIX || "";
 app.use(cors());
 app.use(express.json());
 app.use(API_PREFIX + "/assets", express.static(path.join(__dirname, "../uploads")));
+app.use(API_PREFIX + "/send-email", requireAuth, emailRouter);
 
 app.post(API_PREFIX + "/upload", requireAdmin, (req: Request, res: Response, next: NextFunction) => {
   upload.single("file")(req, res, (err) => {

@@ -14,6 +14,9 @@ import { ProfileUpdateAlertEmail } from "../templates/ProfileUpdateAlertEmail";
 const router: Router = Router();
 
 router.post("/", async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  console.log(`[${new Date().toISOString()}] Email request received:`, { type: req.body.type, to: req.body.email });
+  
   try {
     const {
       type,
@@ -34,6 +37,14 @@ router.post("/", async (req: Request, res: Response) => {
       updateDate,
     } = req.body;
 
+    if (!email) {
+      console.log(`[${Date.now() - startTime}ms] Missing email address`);
+      res.status(400).json({ status: "error", message: "Email requerido" });
+      return;
+    }
+
+    console.log(`[${Date.now() - startTime}ms] Starting template render...`);
+    
     let htmlContent: string;
     let emailSubject: string;
 
@@ -102,6 +113,8 @@ router.post("/", async (req: Request, res: Response) => {
         emailSubject = "Notificación";
     }
 
+    console.log(`[${Date.now() - startTime}ms] Template rendered successfully (${htmlContent.length} chars)`);
+
     const messageConfig = {
       from: `Equipo de Gestion Humana <${process.env.EMAIL_FROM}>`,
       to: email,
@@ -109,10 +122,20 @@ router.post("/", async (req: Request, res: Response) => {
       html: htmlContent,
     };
 
-    await transporter.sendMail(messageConfig);
+    console.log(`[${Date.now() - startTime}ms] Sending email via SMTP...`);
+    
+    // Timeout de 15 segundos para sendMail
+    const sendMailPromise = transporter.sendMail(messageConfig);
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("SMTP timeout - 15s")), 15000);
+    });
+    
+    await Promise.race([sendMailPromise, timeoutPromise]);
+    
+    console.log(`[${Date.now() - startTime}ms] Email sent successfully`);
     res.status(200).json({ status: "success", message: "Email sent successfully" });
   } catch (err: any) {
-    console.error("Email error:", err);
+    console.error(`[${Date.now() - startTime}ms] Email error:`, err);
     res.status(500).json({ status: "error", message: err.message || "Error al enviar email" });
   }
 });

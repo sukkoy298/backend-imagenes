@@ -41,7 +41,7 @@ app.post(API_PREFIX + "/upload", requireAdmin, (req: Request, res: Response, nex
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
-      res.status(413).json({ url: null, status: "error", message: "El archivo supera el límite de 5MB" });
+      res.status(413).json({ url: null, status: "error", message: "El archivo supera el límite de 10MB" });
       return;
     }
     res.status(400).json({ url: null, status: "error", message: err.message });

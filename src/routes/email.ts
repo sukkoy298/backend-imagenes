@@ -35,7 +35,7 @@ router.post("/", async (req: Request, res: Response) => {
       requestId,
       updatedFields,
       updateDate,
-      NEXT_PUBLIC_APP_URL: appUrl,
+      appUrl,
     } = req.body;
 
     if (!email) {

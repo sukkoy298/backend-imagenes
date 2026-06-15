@@ -8,6 +8,7 @@ interface NewRequestAlertEmailProps {
     requestType: string;
     requestId: string;
     description?: string;
+    appUrl?: string;
 }
 
 export function NewRequestAlertEmail({
@@ -17,6 +18,7 @@ export function NewRequestAlertEmail({
     requestType,
     requestId,
     description,
+    appUrl: appUrlProp
 }: NewRequestAlertEmailProps) {
     return (
         <EmailLayout previewText={`Nueva solicitud de ${requestType} de ${employeeName}`}>
@@ -60,7 +62,7 @@ export function NewRequestAlertEmail({
             </Section>
 
             <Section style={ctaSection}>
-                <Button style={buttonStyle} href={process.env.APP_URL || 'http://localhost:3000'}>
+                <Button style={buttonStyle} href={appUrlProp || process.env.APP_URL || 'http://localhost:3000'}>
                     Revisar Solicitud
                 </Button>
             </Section>

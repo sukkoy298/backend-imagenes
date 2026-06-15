@@ -7,6 +7,7 @@ interface RequestStatusEmailProps {
     status: 'EN_REVISION' | 'APROBADA' | 'RECHAZADA';
     reason?: string;
     additionalInfo?: string;
+    appUrl?: string;
 }
 
 export function RequestStatusEmail({
@@ -14,7 +15,8 @@ export function RequestStatusEmail({
     requestType,
     status,
     reason,
-    additionalInfo
+    additionalInfo,
+    appUrl: appUrlProp
 }: RequestStatusEmailProps) {
     const statusConfig = {
         EN_REVISION: {
@@ -83,7 +85,7 @@ export function RequestStatusEmail({
             </Section>
 
             <Section style={ctaSection}>
-                <Button style={buttonStyle} href={process.env.APP_URL || 'http://localhost:3000'}>
+                <Button style={buttonStyle} href={appUrlProp || process.env.APP_URL || 'http://localhost:3000'}>
                     Ver Solicitud
                 </Button>
             </Section>

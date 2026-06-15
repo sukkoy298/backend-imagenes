@@ -7,6 +7,7 @@ interface ProfileUpdateAlertEmailProps {
     employeeEmail: string;
     updatedFields: string[];
     updateDate: string;
+    appUrl?: string;
 }
 
 export function ProfileUpdateAlertEmail({
@@ -15,6 +16,7 @@ export function ProfileUpdateAlertEmail({
     employeeEmail,
     updatedFields,
     updateDate,
+    appUrl: appUrlProp
 }: ProfileUpdateAlertEmailProps) {
     return (
         <EmailLayout previewText={`Actualización de datos de ${employeeName}`}>
@@ -58,7 +60,7 @@ export function ProfileUpdateAlertEmail({
             </Section>
 
             <Section style={ctaSection}>
-                <Button style={buttonStyle} href={process.env.APP_URL || 'http://localhost:3000'}>
+                <Button style={buttonStyle} href={appUrlProp || process.env.APP_URL || 'http://localhost:3000'}>
                     Ver Empleado
                 </Button>
             </Section>

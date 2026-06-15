@@ -5,9 +5,10 @@ interface CustomEmailProps {
     name: string;
     subject: string;
     message: string;
+    appUrl?: string;
 }
 
-export function CustomEmail({ name, subject, message }: CustomEmailProps) {
+export function CustomEmail({ name, subject, message, appUrl: appUrlProp }: CustomEmailProps) {
     return (
         <EmailLayout previewText={subject}>
             <Section style={sectionStyle}>
@@ -16,7 +17,7 @@ export function CustomEmail({ name, subject, message }: CustomEmailProps) {
             </Section>
 
             <Section style={ctaSection}>
-                <Button style={buttonStyle} href={process.env.APP_URL || 'http://localhost:3000'}>
+                <Button style={buttonStyle} href={appUrlProp || process.env.APP_URL || 'http://localhost:3000'}>
                     Ir al Sistema
                 </Button>
             </Section>

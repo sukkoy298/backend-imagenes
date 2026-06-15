@@ -4,10 +4,12 @@ import { EmailLayout } from './EmailLayout';
 interface PasswordRecoveryEmailProps {
     name: string;
     resetToken: string;
+    appUrl?: string;
 }
 
-export function PasswordRecoveryEmail({ name, resetToken }: PasswordRecoveryEmailProps) {
-    const resetUrl = `${process.env.APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+export function PasswordRecoveryEmail({ name, resetToken, appUrl: appUrlProp }: PasswordRecoveryEmailProps) {
+    const appUrl = appUrlProp || process.env.APP_URL || 'http://localhost:3000';
+    const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
 
     return (
         <EmailLayout previewText="Recuperación de contraseña">

@@ -4,10 +4,11 @@ import { EmailLayout } from './EmailLayout';
 interface GreetingEmailProps {
     name: string;
     personalId?: string;
+    appUrl?: string;
 }
 
-export function GreetingEmail({ name, personalId }: GreetingEmailProps) {
-    const appUrl = process.env.APP_URL || 'http://localhost:3000';
+export function GreetingEmail({ name, personalId, appUrl: appUrlProp }: GreetingEmailProps) {
+    const appUrl = appUrlProp || process.env.APP_URL || 'http://localhost:3000';
     const registerUrl = personalId
         ? `${appUrl}/auth/register?cedula=${encodeURIComponent(personalId)}`
         : `${appUrl}/auth/register`;

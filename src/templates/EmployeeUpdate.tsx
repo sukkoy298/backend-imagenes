@@ -1,13 +1,14 @@
 import { Text, Section, Button } from '@react-email/components';
 import { EmailLayout } from './EmailLayout';
 
-interface CustomEmailProps {
+interface EmployeeUpdateEmailProps {
     name: string;
     subject: string;
     message: string;
+    appUrl?: string;
 }
 
-export function EmployeeUpdateEmail({ name, subject, message }: CustomEmailProps) {
+export function EmployeeUpdateEmail({ name, subject, message, appUrl: appUrlProp }: EmployeeUpdateEmailProps) {
     return (
         <EmailLayout previewText={subject}>
             <Section style={sectionStyle}>
@@ -16,7 +17,7 @@ export function EmployeeUpdateEmail({ name, subject, message }: CustomEmailProps
             </Section>
 
             <Section style={ctaSection}>
-                <Button style={buttonStyle} href={process.env.APP_URL || 'http://localhost:3000'}>
+                <Button style={buttonStyle} href={appUrlProp || process.env.APP_URL || 'http://localhost:3000'}>
                     Ir al Sistema
                 </Button>
             </Section>

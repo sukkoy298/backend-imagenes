@@ -35,6 +35,7 @@ router.post("/", async (req: Request, res: Response) => {
       requestId,
       updatedFields,
       updateDate,
+      NEXT_PUBLIC_APP_URL: appUrl,
     } = req.body;
 
     if (!email) {
@@ -50,11 +51,11 @@ router.post("/", async (req: Request, res: Response) => {
 
     switch (type) {
       case "greeting":
-        htmlContent = await render(GreetingEmail({ name, personalId }));
+        htmlContent = await render(GreetingEmail({ name, personalId, appUrl }));
         emailSubject = "Bienvenido al sistema de solicitudes";
         break;
       case "employeeUpdate":
-        htmlContent = await render(EmployeeUpdateEmail({ name, subject: subject || "Notificación", message: message || "" }));
+        htmlContent = await render(EmployeeUpdateEmail({ name, subject: subject || "Notificación", message: message || "", appUrl }));
         emailSubject = subject || "Notificación";
         break;
       case "notification":
@@ -62,15 +63,16 @@ router.post("/", async (req: Request, res: Response) => {
           name,
           subject: subject || "Nueva notificación",
           message: message || "Tienes una nueva notificación.",
+          appUrl,
         }));
         emailSubject = subject || "Nueva notificación";
         break;
       case "passwordRecovery":
-        htmlContent = await render(PasswordRecoveryEmail({ name, resetToken: resetToken || "" }));
+        htmlContent = await render(PasswordRecoveryEmail({ name, resetToken: resetToken || "", appUrl }));
         emailSubject = "Recuperación de contraseña";
         break;
       case "custom":
-        htmlContent = await render(CustomEmail({ name, subject: subject || "Notificación", message: message || "" }));
+        htmlContent = await render(CustomEmail({ name, subject: subject || "Notificación", message: message || "", appUrl }));
         emailSubject = subject || "Notificación";
         break;
       case "requestStatus":
@@ -84,6 +86,7 @@ router.post("/", async (req: Request, res: Response) => {
           status,
           reason,
           additionalInfo,
+          appUrl,
         }));
         emailSubject = `Estado de tu solicitud: ${status === "EN_REVISION" ? "En Revisión" : status === "APROBADA" ? "Aprobada" : "Rechazada"}`;
         break;
@@ -95,6 +98,7 @@ router.post("/", async (req: Request, res: Response) => {
           requestType: requestType || "Solicitud",
           requestId: requestId || "",
           description: message,
+          appUrl,
         }));
         emailSubject = `Nueva solicitud pendiente de revisión: ${requestType || "Solicitud"}`;
         break;
@@ -105,11 +109,12 @@ router.post("/", async (req: Request, res: Response) => {
           employeeEmail: employeeEmail || "",
           updatedFields: updatedFields || [],
           updateDate: updateDate || new Date().toLocaleDateString("es-VE"),
+          appUrl,
         }));
         emailSubject = `Actualización de datos personales: ${employeeName || "Empleado"}`;
         break;
       default:
-        htmlContent = await render(NotificationEmail({ name, subject: "Notificación", message: message || "" }));
+        htmlContent = await render(NotificationEmail({ name, subject: "Notificación", message: message || "", appUrl }));
         emailSubject = "Notificación";
     }
 

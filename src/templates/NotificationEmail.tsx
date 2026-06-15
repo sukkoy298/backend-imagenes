@@ -5,9 +5,10 @@ interface NotificationEmailProps {
     name: string;
     subject: string;
     message: string;
+    appUrl?: string;
 }
 
-export function NotificationEmail({ name, subject, message }: NotificationEmailProps) {
+export function NotificationEmail({ name, subject, message, appUrl: appUrlProp }: NotificationEmailProps) {
     return (
         <EmailLayout previewText={subject}>
             <Section style={sectionStyle}>
@@ -29,7 +30,7 @@ export function NotificationEmail({ name, subject, message }: NotificationEmailP
             </Section>
 
             <Section style={ctaSection}>
-                <Button style={buttonStyle} href={process.env.APP_URL || 'http://localhost:3000'}>
+                <Button style={buttonStyle} href={appUrlProp || process.env.APP_URL || 'http://localhost:3000'}>
                     Ver Detalles
                 </Button>
             </Section>

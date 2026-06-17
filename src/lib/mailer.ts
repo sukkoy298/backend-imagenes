@@ -3,6 +3,8 @@ import nodemailer from "nodemailer";
 const BATCH_SIZE = 20;
 const DEFAULT_BASE_DELAY = 15000;
 const DEFAULT_INCREMENT = 1000;
+const DEFAULT_RETRY_DELAY = 60000;
+const DEFAULT_MAX_RETRIES = 3;
 const SEND_MAIL_TIMEOUT = 15000;
 
 export interface BatchResult {
@@ -14,7 +16,9 @@ export interface BatchResult {
 export async function sendEmailsInBatches(
   messages: nodemailer.SendMailOptions[],
   baseDelayMs: number = DEFAULT_BASE_DELAY,
-  incrementMs: number = DEFAULT_INCREMENT
+  incrementMs: number = DEFAULT_INCREMENT,
+  retryDelayMs: number = DEFAULT_RETRY_DELAY,
+  maxRetries: number = DEFAULT_MAX_RETRIES
 ): Promise<BatchResult> {
   const chunks: nodemailer.SendMailOptions[][] = [];
   for (let i = 0; i < messages.length; i += BATCH_SIZE) {
@@ -26,27 +30,43 @@ export async function sendEmailsInBatches(
   const errors: { to: string; error: string }[] = [];
 
   for (let i = 0; i < chunks.length; i++) {
-    const chunk = chunks[i];
-    console.log(`[Batch ${i + 1}/${chunks.length}] Enviando ${chunk.length} correo(s)...`);
+    let pending = chunks[i];
+    let attempt = 0;
 
-    const results = await Promise.allSettled(
-      chunk.map((msg) => {
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error("SMTP timeout - 15s")), SEND_MAIL_TIMEOUT);
-        });
-        return Promise.race([transporter.sendMail(msg), timeoutPromise]);
-      })
-    );
-
-    results.forEach((result, idx) => {
-      const to = String(chunk[idx].to || "desconocido");
-      if (result.status === "fulfilled") {
-        sent++;
-      } else {
-        failed++;
-        errors.push({ to, error: result.reason?.message || "Error desconocido" });
+    while (pending.length > 0 && attempt <= maxRetries) {
+      if (attempt > 0) {
+        console.log(`[Batch ${i + 1}/${chunks.length}] Reintento ${attempt}/${maxRetries}: esperando ${retryDelayMs}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
       }
-    });
+
+      console.log(`[Batch ${i + 1}/${chunks.length}] Intento ${attempt + 1}: enviando ${pending.length} correo(s)...`);
+
+      const results = await Promise.allSettled(
+        pending.map((msg) => {
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error("SMTP timeout - 15s")), SEND_MAIL_TIMEOUT);
+          });
+          return Promise.race([transporter.sendMail(msg), timeoutPromise]);
+        })
+      );
+
+      const nextPending: nodemailer.SendMailOptions[] = [];
+      results.forEach((result, idx) => {
+        const to = String(pending[idx].to || "desconocido");
+        if (result.status === "fulfilled") {
+          sent++;
+        } else {
+          nextPending.push(pending[idx]);
+          if (attempt === maxRetries) {
+            failed++;
+            errors.push({ to, error: result.reason?.message || "Error desconocido" });
+          }
+        }
+      });
+
+      pending = nextPending;
+      attempt++;
+    }
 
     if (i < chunks.length - 1) {
       const delay = baseDelayMs + i * incrementMs;

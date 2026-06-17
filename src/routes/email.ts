@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { render } from "@react-email/components";
-import { transporter } from "../lib/mailer";
+import { transporter, sendEmailsInBatches, BatchResult } from "../lib/mailer";
 
 import { GreetingEmail } from "../templates/GreetingEmail";
 import { NotificationEmail } from "../templates/NotificationEmail";
@@ -38,13 +38,19 @@ router.post("/", async (req: Request, res: Response) => {
       appUrl,
     } = req.body;
 
-    if (!email) {
+    const recipients = Array.isArray(email)
+      ? email.filter((e): e is string => typeof e === "string" && e.length > 0)
+      : typeof email === "string" && email.length > 0
+      ? [email]
+      : [];
+
+    if (recipients.length === 0) {
       console.log(`[${Date.now() - startTime}ms] Missing email address`);
       res.status(400).json({ status: "error", message: "Email requerido" });
       return;
     }
 
-    console.log(`[${Date.now() - startTime}ms] Starting template render...`);
+    console.log(`[${Date.now() - startTime}ms] Starting template render for ${recipients.length} recipient(s)...`);
     
     let htmlContent: string;
     let emailSubject: string;
@@ -127,18 +133,34 @@ router.post("/", async (req: Request, res: Response) => {
       html: htmlContent,
     };
 
-    console.log(`[${Date.now() - startTime}ms] Sending email via SMTP...`);
-    
-    // Timeout de 15 segundos para sendMail
-    const sendMailPromise = transporter.sendMail(messageConfig);
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("SMTP timeout - 15s")), 15000);
+    const messages = recipients.map((addr) => ({
+      ...messageConfig,
+      to: addr,
+    }));
+
+    console.log(`[${Date.now() - startTime}ms] Sending ${messages.length} email(s) via SMTP...`);
+
+    if (messages.length === 1) {
+      const sendMailPromise = transporter.sendMail(messages[0]);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("SMTP timeout - 15s")), 15000);
+      });
+
+      await Promise.race([sendMailPromise, timeoutPromise]);
+
+      console.log(`[${Date.now() - startTime}ms] Email sent successfully`);
+      res.status(200).json({ status: "success", message: "Email sent successfully" });
+      return;
+    }
+
+    const result: BatchResult = await sendEmailsInBatches(messages);
+
+    console.log(`[${Date.now() - startTime}ms] Bulk email completed: ${result.sent} sent, ${result.failed} failed`);
+    res.status(200).json({
+      status: "success",
+      message: `Envío masivo completado: ${result.sent} enviados, ${result.failed} fallidos`,
+      details: result,
     });
-    
-    await Promise.race([sendMailPromise, timeoutPromise]);
-    
-    console.log(`[${Date.now() - startTime}ms] Email sent successfully`);
-    res.status(200).json({ status: "success", message: "Email sent successfully" });
   } catch (err: any) {
     console.error(`[${Date.now() - startTime}ms] Email error:`, err);
     res.status(500).json({ status: "error", message: err.message || "Error al enviar email" });

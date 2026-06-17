@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 
-const BATCH_SIZE = 30;
-const DEFAULT_BASE_DELAY = 10000;
+const BATCH_SIZE = 20;
+const DEFAULT_BASE_DELAY = 15000;
 const DEFAULT_INCREMENT = 1000;
 const SEND_MAIL_TIMEOUT = 15000;
 

@@ -25,6 +25,8 @@ router.post("/", async (req: Request, res: Response) => {
       message,
       resetToken,
       subject,
+      html,
+      resetUrl,
       requestType,
       status,
       reason,
@@ -76,6 +78,17 @@ router.post("/", async (req: Request, res: Response) => {
       case "passwordRecovery":
         htmlContent = await render(PasswordRecoveryEmail({ name, resetToken: resetToken || "", appUrl }));
         emailSubject = "Recuperación de contraseña";
+        break;
+      case "password-recovery":
+        htmlContent = typeof html === "string" && html.length > 0
+          ? html
+          : await render(PasswordRecoveryEmail({
+              name,
+              resetToken: resetToken || "",
+              resetUrl: resetUrl || "",
+              appUrl,
+            }));
+        emailSubject = subject || "Recuperación de contraseña";
         break;
       case "custom":
         htmlContent = await render(CustomEmail({ name, subject: subject || "Notificación", message: message || "", appUrl }));
